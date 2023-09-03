@@ -1,0 +1,421 @@
+<import
+  name="ad-component"
+  src="../../components/ad-component/index.ux"
+></import>
+<import name="my-popup" src="apex-ui/components/popup/index"></import>
+<import name="my-button" src="apex-ui/components/button/index"></import>
+
+<template>
+  <div class="stack-wrapper">
+    <my-popup
+      id="popupCenter"
+      position="center"
+      title="提示"
+      content="是否看激励视频?"
+      closable="{{true}}"
+    >
+      <my-button type="success" ontap="handleClickClose('popupCenter')"
+        >确定</my-button
+      >
+      <div class="icon-close" slot="close">
+        <my-icon
+          type="close-circle-outline"
+          size="40"
+          color="#2c3e50"
+        ></my-icon>
+      </div>
+    </my-popup>
+    <!-- <ad-component></ad-component> -->
+    <stack class="stack-wrapper">
+      <list
+        id="list"
+        class="book-content"
+        onclick="showOrHidePop"
+        style="background-color: {{ bgColor }};"
+      >
+        <list-item type="title">
+          <text class="book-title" style="{{titleStyle}}">{{
+            chapterTitle
+          }}</text>
+        </list-item>
+        <list-item type="content" show="{{!!content}}">
+          <text class="book-text" style="{{contentStyle}}">{{ content }}</text>
+        </list-item>
+        <list-item type="btns">
+          <div class="bottom-bar">
+            <text
+              @click="switchChapter('last')"
+              class="btn-bottom {{chapterId === 1 ? 'btn-bottom-disabled' : ''}}"
+            >
+              上一章
+            </text>
+            <text @click="goToContents" class="btn-bottom btn-margin"
+              >目录</text
+            >
+            <text
+              @click="switchChapter('next')"
+              class="btn-bottom {{chapterId === total ? 'btn-bottom-disabled' : ''}}"
+            >
+              下一章
+            </text>
+          </div>
+        </list-item>
+      </list>
+      <div class="pop-layer" show="{{showPop}}">
+        <div class="header">
+          <image src="/assets/images/back.svg" onclick="back"></image>
+          <text>{{ bookTitle }}</text>
+        </div>
+        <div class="middle" onclick="showOrHidePop">
+          <div
+            class="float-btn"
+            onclick="changeNightMode"
+            style="bottom: 50px;"
+          >
+            <image
+              src="/assets/images/sun.svg"
+              if="{{userSetting.nightMode}}"
+            ></image>
+            <image src="/assets/images/moon.svg" else></image>
+          </div>
+        </div>
+        <div class="footer">
+          <div class="bg-color-change">
+            <div
+              class="color-item {{$item === userSetting.bgColor ? 'selected' : ''}}"
+              for="{{colors}}"
+              style="background-color: {{$item}};"
+              onclick="bgcolorChange($item)"
+            ></div>
+          </div>
+          <div class="font-size-change">
+            <text
+              class="btn"
+              onclick="sizeChange('minus')"
+              disabled="{{userSetting.fontsize <= 30}}"
+              >A-</text
+            >
+            <text class="size">{{ userSetting.fontsize }}</text>
+            <text
+              class="btn"
+              onclick="sizeChange('plus')"
+              disabled="{{userSetting.fontsize >= 70}}"
+              >A+</text
+            >
+          </div>
+          <div class="bottom-bar">
+            <text
+              @click="switchChapter('last')"
+              class="btn-bottom {{chapterId === 1 ? 'btn-bottom-disabled' : ''}}"
+            >
+              上一章
+            </text>
+            <text @click="goToContents" class="btn-bottom btn-margin"
+              >目录</text
+            >
+            <text
+              @click="switchChapter('next')"
+              class="btn-bottom {{chapterId === total ? 'btn-bottom-disabled' : ''}}"
+            >
+              下一章
+            </text>
+          </div>
+        </div>
+      </div>
+    </stack>
+  </div>
+</template>
+
+<script>
+import { getBookContent } from '../../assets/data/book-content.js'
+import { contentsData } from '../../assets/data/contents.js'
+import { adUnitIds } from '../../assets/data/constant.js'
+import ad from '@service.ad'
+
+export default {
+  public: {
+    bookId: 1,
+    bookTitle: '',
+    chapterId: 1,
+    total: 120
+  },
+  private: {
+    content: '',
+    count: 0,
+    rewardedVideoAd: null,
+    chapterTitle: '',
+    showPop: false,
+    userSetting: {
+      fontsize: 70,
+      bgColor: '#FFF2E2',
+      nightMode: false,
+      fontFamily: 'default'
+    },
+    colors: ['#EAEAEF', '#FAF9DE', '#E3EDCD', '#DCE2F1', '#FFF2E2']
+  },
+  computed: {
+    bgColor() {
+      if (this.userSetting.nightMode) return 'rgb(29,29,31)'
+      else return this.userSetting.bgColor
+    },
+    titleStyle() {
+      return {
+        fontFamily: this.userSetting.fontFamily,
+        color: this.userSetting.nightMode ? 'rgb(126,129,134)' : '#000000'
+      }
+    },
+    contentStyle() {
+      return {
+        fontFamily: this.userSetting.fontFamily,
+        color: this.userSetting.nightMode ? 'rgb(126,129,134)' : '#000000',
+        fontSize: this.userSetting.fontsize
+      }
+    }
+  },
+  async onInit() {
+    /* 
+    调用接口，用bookId和chapterId查询页面的内容，更新content和title。
+    以下代码为模拟查询。
+    */
+    // 参数传入时会变成string类型，需要转换类型
+    this.chapterTitle = this.chapterName
+    const data = await $apis.book.getBookChapterContent({
+      bookId: this.bookId,
+      chapterId: this.chapterId
+    })
+    this.content = data[0].chapterContent
+    this.chapterName = data[0].chapterName
+    //搜索优化
+    // this.$page.setMeta({
+    //   title: this.chapterName,
+    //   description: this.chapterName,
+    //   keywords: 'bookId,bookTitle,chapterId,total'
+    // })
+    this.bookTitle = this.chapterName
+    this.$child('popupCenter').show()
+    setInterval(() => {
+      this.$child('popupCenter').show()
+    }, 60 * 1000)
+  },
+  async onReady() {
+    //获取用户自定义的样式,不存在自定义样式时使用默认样式
+    const data = await $utils.getStorage('user-setting')
+    if (!!data) this.userSetting = JSON.parse(data)
+  },
+  onBackPress() {
+    $utils.routerBack()
+    return true
+  },
+  /* -------------------SelfCustomEvent------------------ */
+  async switchChapter(type, e) {
+    e.stopPropagation()
+    if (
+      (type === 'next' && this.chapterId === this.total) ||
+      (type === 'last' && this.chapterId === 1)
+    ) {
+      return
+    }
+    if (!!this.showPop) this.showPop = false
+    // 调用接口，用bookId和chapterId查询下一页的内容，更新content和title。以下代码为模拟翻页。
+    this.chapterId =
+      type === 'next' ? Number(this.chapterId) + 1 : Number(this.chapterId) - 1
+    const data = await $apis.book.getBookChapterContent({
+      bookId: this.bookId,
+      chapterId: this.chapterId
+    })
+    this.content = data[0].chapterContent
+    this.chapterName = data[0].chapterName
+    this.bookTitle = this.chapterName
+    this.$element('list').scrollTo({ index: 0 })
+    // 广告
+    this.$child('popupCenter').show()
+  },
+  handleClickClose(popup) {
+    this.$child(popup).hide()
+
+    const provider = ad.getProvider()
+
+    if (provider) {
+      console.log('this.rewardedVideoAd', this.rewardedVideoAd)
+      if (this.rewardedVideoAd) {
+        this.rewardedVideoAd.load()
+        return
+      }
+      this.rewardedVideoAd = ad.createRewardedVideoAd({
+        adUnitId: adUnitIds[provider].rewardedVideo
+      })
+
+      this.rewardedVideoAd.onLoad(() => {
+        console.log('激励视频广告加载成功')
+        this.rewardedVideoAd.show()
+      })
+      this.rewardedVideoAd.onClose(res => {
+        if (res && res.isEnded) {
+          $utils.analytics('video', '激励视频')
+          $utils.showToast('已看完激励视频，已发放金币奖励！')
+        } else {
+          console.log('播放中途退出，不下发奖励')
+        }
+      })
+    }
+  },
+  goToContents() {
+    $utils.route2theUrl('pages/book-directory', {
+      bookId: this.bookId
+    })
+  },
+  showOrHidePop() {
+    this.showPop = !this.showPop
+  },
+  back() {
+    $utils.routerBack()
+  },
+  sizeChange(type) {
+    if (type === 'plus') this.userSetting.fontsize++
+    else this.userSetting.fontsize--
+    this.saveUserSettings()
+  },
+  bgcolorChange(color) {
+    this.userSetting.bgColor = color
+    this.saveUserSettings()
+  },
+  fontChange(item) {
+    this.userSetting.fontFamily = item.font
+    this.saveUserSettings()
+  },
+  changeNightMode(e) {
+    e.stopPropagation()
+    this.userSetting.nightMode = !this.userSetting.nightMode
+    this.saveUserSettings()
+  },
+  saveUserSettings() {
+    $utils.setStorage('user-setting', JSON.stringify(this.userSetting))
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+.stack-wrapper {
+  width: 100%;
+  height: 100%;
+}
+.book-content {
+  padding: 0 @gap-4;
+  width: 100%;
+  flex: 1;
+  .flex-box-mixins(column, flex-start, flex-start);
+  .book-title {
+    .title;
+    margin: 60px 0 @gap-4 0;
+  }
+  .g22kjdgy {
+    color: #ffffff;
+  }
+  .book-text {
+    margin: @gap-3 0;
+  }
+}
+.btn-bottom {
+  .btn-primary;
+  flex: 1;
+  text-align: center;
+}
+.btn-margin {
+  margin: 0 @gap-4;
+}
+.btn-bottom-disabled {
+  .btn-disabled;
+}
+.pop-layer {
+  .page-column;
+  .header {
+    .flex-box-mixins(row, flex-start, center);
+    width: 100%;
+    height: 30 * @size-factor;
+    background-color: @text-black;
+    padding: 0 @gap-4;
+    image {
+      width: 10 * @size-factor;
+      height: 10 * @size-factor;
+      margin-right: @gap-4;
+    }
+    text {
+      font-size: 8 * @size-factor;
+      color: @white;
+    }
+  }
+  .footer {
+    padding-top: @gap-3;
+    .flex-box-mixins(column, flex-start, center);
+    width: 100%;
+    background-color: @text-black;
+    .font-size-change {
+      width: 90%;
+      padding: @gap-1 @gap-4;
+      .flex-box-mixins(row, space-between, center);
+      .btn {
+        font-size: 10 * @size-factor;
+        color: @white;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+      }
+      .size {
+        font-size: 8 * @size-factor;
+        color: @white;
+      }
+    }
+    .bg-color-change {
+      width: 90%;
+      padding: @gap-1 @gap-4;
+      .flex-box-mixins(row, space-between, center);
+      .color-item {
+        width: 20 * @size-factor;
+        height: 10 * @size-factor;
+        border-radius: 8px;
+      }
+      .selected {
+        border: 5px solid @brand;
+      }
+    }
+
+    .font-change {
+      width: 90%;
+      padding: @gap-1 @gap-4;
+      .flex-box-mixins(row, space-between, center);
+      flex-wrap: wrap;
+      .font-item {
+        .btn-primary;
+        color: @grey;
+        border-color: @grey;
+        width: 45%;
+        margin-bottom: 2 * @size-factor;
+      }
+      .selected {
+        color: @brand;
+        border-color: @brand;
+        border-width: 3px;
+      }
+    }
+  }
+  .middle {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    .float-btn {
+      position: absolute;
+      right: 10 * @size-factor;
+      .flex-box-mixins(row, center, center);
+      width: 20 * @size-factor;
+      height: 20 * @size-factor;
+      background-color: @text-black;
+      border-radius: 100%;
+      image {
+        width: 10 * @size-factor;
+        height: 10 * @size-factor;
+      }
+    }
+  }
+}
+</style>

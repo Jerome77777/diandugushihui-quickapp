@@ -1,0 +1,186 @@
+<import name="book-cover" src="../../components/book-cover/index.ux"></import>
+<import
+  name="ad-component"
+  src="../../components/ad-component/index.ux"
+></import>
+
+<template>
+  <div class="wrapper">
+    <div class="header">
+      <book-cover class="book-img" book-info="{{info}}"></book-cover>
+      <div class="right">
+        <text class="book-name">{{ info.bookName }}</text>
+        <text class="book-author">{{ info.bookAuthorName }}</text>
+        <text class="book-classify">{{
+          info.age + '|' + info.numOfChapter + '章'
+        }}</text>
+        <div class="book-directory" @click="handleDirectoryClick">
+          <text>目录：共{{ info.numOfChapter }}章</text>
+          <text class="iconfont">{{ `\ue6d7` }}</text>
+        </div>
+        <div class="book-directory" @click="handleReadClick">
+          <text>开始阅读</text>
+        </div>
+        <div class="book-directory" @click="handleAddShelfClick">
+          <text>{{ isInShelf ? '移出书架' : '加入书架' }}</text>
+        </div>
+      </div>
+    </div>
+    <div class="book-introduction">
+      <text class="book-header">简介</text>
+      <text class="details">{{ info.bookIntroduction }}</text>
+    </div>
+    <ad-component></ad-component>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import ad from '@service.ad'
+import { adUnitIds } from '../../assets/data/constant.js'
+
+export default {
+  data: {
+    info: {},
+    myBooks: [],
+    isInShelf: false,
+    bannerAdId: ''
+  },
+
+  async onInit() {
+    this.info = JSON.parse(this.bookInfo)
+    this.$page.setTitleBar({ text: this.info.name })
+    this.myBooks = await $apis.book.getUserBooksShelf({
+      searchAll: false,
+      bookShelf: true
+    })
+
+    for (let i = 0; i < this.myBooks.length; i++) {
+      if (this.myBooks[i].bookId === this.info.bookId) {
+        this.isInShelf = true
+        break
+      }
+    }
+  },
+
+  async onShow() {
+    const provider = ad.getProvider()
+    console.log('provider', provider)
+    if (provider) {
+      this.bannerAdId = adUnitIds[provider].bannerId
+    }
+    let bannerAd = ad.createBannerAd({
+      adUnitId: this.bannerAdId
+    })
+
+    bannerAd.show()
+  },
+
+  handleDirectoryClick() {
+    router.push({
+      uri: 'pages/book-directory',
+      params: {
+        bookId: this.info.bookId
+      }
+    })
+  },
+  handleAddShelfClick() {
+    if (this.isInShelf) {
+      $apis.book
+        .removeUserBooksShelf({
+          searchAll: false,
+          bookShelf: true,
+          searchType: '',
+          bookId: this.info.bookId
+        })
+        .then(() => {
+          $utils.showToast('移出书架成功')
+          this.isInShelf = false
+        })
+    } else {
+      $apis.book
+        .setUserBooksShelf({
+          searchAll: false,
+          bookShelf: true,
+          searchType: '',
+          bookId: this.info.bookId
+        })
+        .then(() => {
+          $utils.showToast('加入书架成功')
+          this.isInShelf = true
+        })
+    }
+  },
+  async handleReadClick() {
+    const directory = await $apis.book.getBookChapter({
+      searchAll: '',
+      bookShelf: '',
+      searchType: '',
+      bookId: this.info.bookId
+    })
+    router.push({
+      uri: 'pages/book-read',
+      params: {
+        bookId: this.info.bookId,
+        chapterId: directory[0].chapterId,
+        chapterName: directory[0].chapterName
+      }
+    })
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+.wrapper {
+  .flex-box-mixins(column, flex-start, flex-start);
+  background-color: @bg;
+  .header {
+    .flex-box-mixins(row, space-between, flex-start);
+    height: 70%;
+    margin: @gap-5;
+    .book-img {
+      width: @gap-5 * 8;
+      height: 600px;
+      border-radius: @gap-1;
+    }
+    .right {
+      .flex-box-mixins(column, flex-start, flex-start);
+      margin: 0 @gap-3;
+      .book-name {
+        font-size: @gap-4;
+        color: #000;
+      }
+      .book-author {
+        margin-top: @gap-5;
+      }
+      .book-classify {
+        margin-top: @gap-5;
+      }
+      .book-directory {
+        margin-top: @gap-5;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f9d423;
+        width: @gap-5 * 9;
+        height: @gap-5 * 2;
+        padding: 0 @gap-3;
+        border-radius: @gap-1;
+      }
+    }
+  }
+  .book-introduction {
+    .flex-box-mixins(column, flex-start, flex-start);
+    width: 100%;
+    padding: @gap-5 @gap-2;
+    border-top-right-radius: @gap-5;
+    border-top-left-radius: @gap-5;
+    background-color: #fff;
+    height: 100%;
+    .book-header {
+      font-size: @size-factor * 8;
+      margin: 0 0 @gap-2 0;
+    }
+  }
+}
+</style>

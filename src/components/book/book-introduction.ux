@@ -1,0 +1,80 @@
+<import name="book-cover" src="../book-cover/index.ux"></import>
+
+<template>
+  <div class="wrapper" @click="handleIntrductionClick">
+    <book-cover book-info="{{bookInfo}}"></book-cover>
+    <div class="right">
+      <text class="book-name">{{ bookInfo.bookName }}</text>
+      <text class="book-description" style="lines: {{lines}}">{{
+        bookInfo.bookIntroduction
+      }}</text>
+      <div class="book-info">
+        <text class="book-author">{{ bookInfo.bookAuthorName }} </text>
+        <text class="split">|</text>
+        <text class="book-classify">{{ bookInfo.age }} </text>
+        <text class="split">|</text>
+        <text class="book-chapter">{{ bookInfo.numOfChapter }}章</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+export default {
+  data: {
+    info: {}
+  },
+
+  props: ['bookInfo', 'lines'],
+
+  onInit() {},
+
+  handleIntrductionClick() {
+    router.push({
+      uri: 'pages/book-introduction',
+      params: {
+        bookInfo: JSON.stringify(this.bookInfo)
+      }
+    })
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+
+.wrapper {
+  width: 100%;
+  .flex-box-mixins(row, center, center);
+  .book-img {
+    margin: @gap-5 0 0 @gap-5;
+
+    height: 80%;
+    width: 40%;
+    border-radius: @size-factor * 2;
+  }
+  .right {
+    margin: @gap-5;
+    width: 60%;
+    .flex-box-mixins(column, flex-start, flex-start);
+    .book-name {
+      font-size: @gap-4;
+      color: #000;
+    }
+    .book-description {
+      margin-top: @size-factor;
+      text-overflow: ellipsis;
+    }
+    .book-info {
+      margin-top: @gap-1 * 7;
+      .book-author {
+        color: #000;
+      }
+      .split {
+        margin: 0 @gap-1;
+      }
+    }
+  }
+}
+</style>

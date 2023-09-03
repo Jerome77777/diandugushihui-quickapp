@@ -1,0 +1,43 @@
+<import
+  name="book-introduction"
+  src="../../components/book/book-introduction.ux"
+></import>
+<template>
+  <div class="wrapper">
+    <div for="{{recommend}}" class="classify-item">
+      <book-introduction book-info="{{$item}}" lines="2"></book-introduction>
+    </div>
+  </div>
+</template>
+
+<script>
+import { classify } from '../../assets/data/mock'
+export default {
+  data: { recommend: [] },
+
+  async onInit() {
+    this.$page.setTitleBar({ text: this.classify })
+    this.recommend = await $apis.book.getBooksByType({
+      searchAll: false,
+      searchType: this.classify
+    })
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+.wrapper {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  .classify-item {
+    width: 100%;
+    height: @gap-3 * 9;
+  }
+}
+.title {
+  text-align: center;
+  color: #212121;
+}
+</style>

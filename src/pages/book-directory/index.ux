@@ -1,0 +1,68 @@
+<template>
+  <div class="wrapper">
+    <div
+      class="directory-item"
+      for="{{directory}}"
+      @click="handleDirectoryClick($item)"
+    >
+      <div class="item-left">
+        <text>{{ $item.chapterName }}</text>
+      </div>
+      <text class="iconfont">{{ `\ue6d7` }}</text>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+
+export default {
+  data: {
+    directory: []
+  },
+
+  async onInit() {
+    this.directory = await $apis.book.getBookChapter({
+      searchAll: '',
+      bookShelf: '',
+      searchType: '',
+      bookId: this.bookId
+    })
+  },
+  handleDirectoryClick(item) {
+    console.log(item.chapterName)
+    router.push({
+      uri: 'pages/book-read',
+      params: {
+        bookId: item.bookId,
+        chapterId: item.chapterId,
+        chapterName: item.chapterName
+      }
+    })
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+
+.wrapper {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  .flex-box-mixins(column, flex-start, flex-start);
+  background-color: @bg;
+  .directory-item {
+    .flex-box-mixins(row, space-between, center);
+    /* height: @gap-5 * 3; */
+    padding: 0 @gap-3 * 2;
+    border-bottom: 1px;
+    border-bottom-color: @border-grey;
+    width: 100%;
+    text {
+      font-size: @gap-5;
+      line-height: @gap-5 * 2;
+    }
+  }
+}
+</style>

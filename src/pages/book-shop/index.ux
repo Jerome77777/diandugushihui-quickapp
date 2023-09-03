@@ -1,0 +1,208 @@
+<import
+  name="book-introduction"
+  src="../../components/book/book-introduction.ux"
+></import>
+<import name="my-search-bar" src="apex-ui/components/search-bar/index"></import>
+
+<template>
+  <div class="wrapper">
+    <my-search-bar
+      @focus="handleFocus"
+      @change="handleChange"
+      @blur="handleBlur"
+    ></my-search-bar>
+    <div if="{{isFocusSearch}}" class="search-list">
+      <div for="{{searchs}}" class="mybook-introduction">
+        <book-introduction book-info="{{$item}}" lines="10"></book-introduction>
+      </div>
+    </div>
+    <swiper if="{{!isFocusSearch}}" class="swiper">
+      <book-introduction
+        for="{{recommend}}"
+        book-info="{{$item}}"
+        lines="6"
+      ></book-introduction>
+    </swiper>
+
+    <div if="{{!isFocusSearch}}" class="book-classify">
+      <text class="title">三国</text>
+      <div for="{{recommend}}" class="mybook-introduction">
+        <book-introduction book-info="{{$item}}" lines="2"></book-introduction>
+      </div>
+    </div>
+    <div if="{{!isFocusSearch}}" class="more-book">
+      <div class="header">
+        <text class="title">更多小说</text>
+        <text>查看更多</text>
+      </div>
+      <div class="content">
+        <div for="{{sanguo}}" class="mybook-introduction">
+          <book-introduction
+            book-info="{{$item}}"
+            lines="2"
+          ></book-introduction>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    recommend: [],
+    searchs: [],
+    sanguo: [],
+    moreBooks: [],
+    activeTab: 0,
+    isFocusSearch: false,
+    inputValue: ''
+  },
+
+  props: ['pageShow'],
+
+  async onInit() {
+    this.$watch('pageShow', 'watchPageshowChange')
+  },
+
+  async watchPageshowChange() {
+    if (this.pageShow) {
+      const data = await $apis.book.getAllBooks({
+        searchAll: 'true',
+        bookShelf: '',
+        searchType: '',
+        bookId: ''
+      })
+      this.recommend = $utils.getRandomBooks(data)
+      this.moreBooks = $utils.getRandomBooks(data)
+
+      this.sanguo = await $apis.book.getBooksByType({
+        searchAll: false,
+        searchType: '三国'
+      })
+    }
+  },
+
+  changeTabactive(e) {
+    this.activeTab = e.index
+  },
+  handleFocus() {
+    this.isFocusSearch = true
+  },
+  async handleChange(e) {
+    this.inputValue = e.detail.event.value
+
+    if (this.inputValue) {
+      this.searchs = await $apis.book.searchByName({
+        searchName: this.inputValue
+      })
+    }
+  },
+  handleBlur() {
+    this.isFocusSearch = false
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+
+.wrapper {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: @bg;
+  .swiper {
+    height: @gap-4 * 12;
+    background-color: #fff;
+    margin: @gap-2;
+    border-radius: @gap-2;
+    .book-introduction {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  .search-list {
+    .flex-box-mixins(column, flex-start, flex-start);
+
+    width: 100%;
+    padding: @gap-2 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    background-color: #fff;
+  }
+
+  .book-classify {
+    .flex-box-mixins(column, flex-start, flex-start);
+
+    width: 100%;
+    padding: @gap-2 0;
+    border-top-right-radius: @gap-5;
+    border-top-left-radius: @gap-5;
+    background-color: #fff;
+    .search-input {
+      width: 90%;
+      height: 50px;
+    }
+    .title {
+      margin: 0 @gap-3;
+      font-size: @size-factor * 8;
+    }
+    .book-list {
+      .flex-box-mixins(column, flex-start, flex-start);
+    }
+    .mybook-introduction {
+      width: 100%;
+      height: @gap-3 * 18;
+    }
+    .tabs {
+      margin-top: @gap-2;
+    }
+    .tab-content {
+      height: 200px;
+      .classify-wrap {
+        width: 100%;
+        padding: 0 @gap-2;
+        .flex-box-mixins(row, space-between, center);
+        flex-wrap: wrap;
+        .classify-item {
+          height: @gap-5 * 2;
+          background-color: #c3cfe2;
+          border-radius: @gap-4;
+          padding: 0 @gap-1 * 5;
+          margin-left: @gap-2;
+          margin-top: @gap-1;
+        }
+      }
+    }
+    .tab-bar {
+      .flex-box-mixins(row, flex-start, center);
+      width: 60%;
+    }
+    .tab-text {
+      font-size: @size-factor * 8;
+      font-weight: bold;
+    }
+    .tab-text:active {
+      color: #000;
+    }
+  }
+  .more-book {
+    width: 100%;
+    background-color: #fff;
+    .flex-box-mixins(column, flex-start, center);
+    .header {
+      padding: @gap-2;
+
+      width: 100%;
+      .flex-box-mixins(row, space-between, center);
+      .title {
+        font-size: @size-factor * 8;
+      }
+    }
+    .content {
+      .flex-box-mixins(column, flex-start, flex-start);
+    }
+  }
+}
+</style>

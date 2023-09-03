@@ -1,0 +1,210 @@
+<import name="book-shop" src="../book-shop/index.ux"></import>
+<import name="gold-shop" src="../gold-shop/index.ux"></import>
+<import name="me" src="../me"></import>
+<import name="home" src="../home"></import>
+
+<template>
+  <div class="page-wrapper">
+    <tabs index="{{selectedTab}}" onchange="changeTab">
+      <tab-content>
+        <home page-show="{{selectedTab === 0}}"></home>
+        <book-shop page-show="{{selectedTab === 1}}"></book-shop>
+        <gold-shop page-show="{{selectedTab === 2}}"></gold-shop>
+        <me page-show="{{selectedTab === 3}}"></me>
+      </tab-content>
+      <tab-bar mode="fixed" class="tab-bar">
+        <div class="tab-item" for="tabList">
+          <text class="iconfont">{{ $item.icon }}</text>
+          <text class="tab-title">{{ $item.title }}</text>
+        </div>
+      </tab-bar>
+    </tabs>
+    <div class="mask" if="{{showTips}}">
+      <div class="content-wrap">
+        <div class="content">
+          <text class="title">隐私保护说明</text>
+          <list>
+            <list-item type="list" class="list-item">
+              <text>欢迎使用典阅故事汇！</text>
+              <div>
+                <text>
+                  1.我们将通过<a class="link" href="pages/user-agreement"
+                    >《用户协议》</a
+                  >和<a class="link" href="pages/privacy-policy">《隐私政策》</a
+                  >帮助您了解我们收集、使用、存储个人信息的情况。特别是我们所收集的个人信息类型及用途，以及对信息的保护措施。您可以再本软件内"我的-关于我们"中查看<a
+                    class="link"
+                    href="pages/user-agreement"
+                    >《用户协议》</a
+                  >和<a class="link" href="pages/privacy-policy">《隐私政策》</a
+                  >的内容并了解到您所享有的相关权利实现途径。
+                </text>
+              </div>
+
+              <text
+                >2.在使用本软件时，我们会收集、使用设备标识信息用于用户账号生成。</text
+              >
+              <text
+                >3.我们可能会申请以下权限：（1）访问电话，以保障软件服务的安全运营及效率，并用于统计及安全校验；（2）访问本地存储，帮助您将本软件内书籍下载到您的手机存储，以及通过手机存储将您的本地书籍上传到本软件；（3）访问您设备上的媒体内容和文件，用于读写图书封面、活动图片的缓存提升应用的使用流畅度；（4）开启推送，您可以通过开启推送权限来接收本软件的推送消息；（5）开启无限数据，您可以通过连接无线网络或蜂窝数据来实现本软件需要的联网功能。（6）访问安装程序列表，您可以通过获取您的安装程序列表我们确认您是否安装了我们所推广的产品，以便我们及时向您发放相应的奖励；（7）访问剪切板，您可以复制并粘贴读者qq群号码，客服电话；（8）开启后台应用刷新，开启后可以实现听书、语音朗读及语音控制功能；</text
+              >
+              <text>如您同意请点击“同意并继续”按钮以开启我们的服务。</text>
+            </list-item>
+          </list>
+          <div class="btn-item" @click="handleAgree">
+            <text>同意并继续</text>
+          </div>
+          <div style="margin-top: 30px;" @click="handleDisagree">
+            <text>不同意</text>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import device from '@system.device'
+import { tabList } from '../../assets/data/constant'
+import {
+  private_agree_key,
+  tab_index,
+  reward_sign_type_key,
+  reward_ad_type_key
+} from '../../helper/constants'
+
+export default {
+  data: {
+    tabList,
+    selectedTab: async () => await $utils.getStorage(tab_index),
+    shelfList: [],
+    pageShow: false,
+    showTips: true
+  },
+  async onInit() {
+    const tip = await $utils.getStorage(private_agree_key)
+    if (tip) {
+      this.showTips = false
+    }
+
+    device.getDeviceId({
+      success: function(data) {
+        device.getInfo({
+          success: function(ret) {
+            console.log(ret, data, 'data')
+            $apis.common.pushDeviceInfo({
+              imei: data.deviceId,
+              phoneModel: ret.manufacturer + ret.model,
+              otherDeviceInfo: JSON.stringify(ret)
+            })
+          }
+        })
+      }
+    })
+
+    const res = await $apis.gold.getRewardType({
+      rewardType: 'sign_in'
+    })
+
+    const adRewardType = await $apis.gold.getRewardType({
+      rewardType: 'ad'
+    })
+
+    $utils.setStorage(reward_sign_type_key, JSON.parse(res.reward_type))
+    $utils.setStorage(reward_ad_type_key, JSON.parse(adRewardType.reward_type))
+  },
+  onShow() {
+    this.pageShow = true
+  },
+  onHide() {
+    this.pageShow = false
+  },
+  /* -------------------SelfCustomEvent------------------ */
+  changeTab(e) {
+    let index = e.index === undefined ? 0 : e.index
+    this.selectedTab = index
+    $utils.setStorage(tab_index, index)
+  },
+  handleAgree() {
+    this.showTips = false
+    $utils.setStorage(private_agree_key, 1)
+  },
+  handleDisagree() {
+    this.$app.exit()
+  }
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+
+.link {
+  color: #0000ff;
+}
+
+.mask {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 1);
+  .content-wrap {
+    position: absolute;
+    top: 250px;
+    left: 100px;
+    width: 600px;
+    height: 900px;
+    background-color: #fff;
+    border-radius: 10px;
+    .flex-box-mixins(column, flex-start, flex-start);
+    .content {
+      padding: 30px;
+      .flex-box-mixins(column, flex-start, center);
+      .title {
+        line-height: 80px;
+      }
+      .list-item {
+        .flex-box-mixins(column, flex-start, flex-start);
+      }
+      .btn-item {
+        margin-top: 50px;
+        width: 300px;
+        background-color: #ffe4c4;
+        padding: 20px;
+        border-radius: 20px;
+        .flex-box-mixins(column, center, center);
+        text {
+          line-height: 70px;
+        }
+      }
+      text {
+        line-height: 50px;
+      }
+    }
+  }
+}
+.tab-bar {
+  background-color: @white;
+  .border-top-mixins();
+  padding: 15px 0;
+  height: 140px;
+  .tab-item {
+    flex: 1;
+    .flex-box-mixins(column, center, center);
+    .iconfont {
+      font-size: 50px;
+      color: @text-grey;
+      &:active {
+        color: @brand;
+      }
+    }
+    .g22kjdgy {
+      color: #ffffff;
+    }
+    .tab-title {
+      font-size: 20px;
+      color: @text-grey;
+      &:active {
+        color: @brand;
+      }
+    }
+  }
+}
+</style>

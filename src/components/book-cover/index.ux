@@ -1,0 +1,53 @@
+<template>
+  <div class="book-img">
+    <div class="book-cover">
+      <text class="book-author">{{ bookInfo.bookAuthorName }}</text>
+      <text class="book-name">{{ bookInfo.bookName }}</text>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {},
+  props: ['bookInfo'],
+
+  onInit() {}
+}
+</script>
+
+<style lang="less">
+@import '../../assets/styles/index.less';
+.book-img {
+  margin: @gap-5 0 0 @gap-5;
+
+  height: 80%;
+  width: 40%;
+  border-radius: @size-factor * 2;
+}
+.book-cover {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #e8d7a3;
+  padding: 20px 40px;
+  .book-author {
+    text-align: center;
+    width: 20px;
+    font-size: 20px;
+  }
+  .book-name {
+    text-align: center;
+    width: 50px;
+    font-size: 32px;
+    font-weight: bold;
+    height: 100%;
+  }
+}
+.title {
+  text-align: center;
+  color: #212121;
+}
+</style>
