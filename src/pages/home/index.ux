@@ -17,7 +17,7 @@
         lines="6"
       ></book-introduction>
     </swiper>
-    <ad-component if="{{activeTab === 0 && !showTips}}"></ad-component>
+    <!-- <ad-component if="{{activeTab === 0 && !showTips}}"></ad-component> -->
     <div class="book-classify">
       <text class="title">我的书架</text>
       <div for="{{myBooks}}" class="mybook-introduction">

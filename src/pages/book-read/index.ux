@@ -143,6 +143,7 @@ export default {
     content: '',
     count: 0,
     rewardedVideoAd: null,
+    adCountMap: new Map(),
     chapterTitle: '',
     showPop: false,
     userSetting: {
@@ -192,9 +193,18 @@ export default {
     //   keywords: 'bookId,bookTitle,chapterId,total'
     // })
     this.bookTitle = this.chapterName
-    this.$child('popupCenter').show()
+    this.adCountMap = await $utils.getStorage('ad-count')
+    console.log('cjf this.adCountMap', this.adCountMap)
+    if (this.adCountMap) {
+      const counts = this.adCountMap.get($utils.getCurrentDay())
+      console.log('cjf this.counts', counts)
+      if (counts >= 31) {
+        return
+      }
+    }
+    this.showAd()
     setInterval(() => {
-      this.$child('popupCenter').show()
+      this.showAd()
     }, 60 * 1000)
   },
   async onReady() {
@@ -204,6 +214,19 @@ export default {
   },
   onBackPress() {
     $utils.routerBack()
+    return true
+  },
+  async showAd() {
+    this.adCountMap = await $utils.getStorage('ad-count')
+    console.log('cjf this.adCountMap', this.adCountMap)
+    if (this.adCountMap) {
+      const counts = this.adCountMap.get($utils.getCurrentDay())
+      console.log('cjf this.counts', counts)
+      if (counts >= 31) {
+        return false
+      }
+    }
+    this.showAd()
     return true
   },
   /* -------------------SelfCustomEvent------------------ */
@@ -228,7 +251,7 @@ export default {
     this.bookTitle = this.chapterName
     this.$element('list').scrollTo({ index: 0 })
     // 广告
-    this.$child('popupCenter').show()
+    this.showAd()
   },
   handleClickClose(popup) {
     this.$child(popup).hide()
@@ -236,7 +259,6 @@ export default {
     const provider = ad.getProvider()
 
     if (provider) {
-      console.log('this.rewardedVideoAd', this.rewardedVideoAd)
       if (this.rewardedVideoAd) {
         this.rewardedVideoAd.load()
         return
@@ -249,10 +271,18 @@ export default {
         console.log('激励视频广告加载成功')
         this.rewardedVideoAd.show()
       })
-      this.rewardedVideoAd.onClose(res => {
+      this.rewardedVideoAd.onClose(async res => {
         if (res && res.isEnded) {
           $utils.analytics('video', '激励视频')
           $utils.showToast('已看完激励视频，已发放金币奖励！')
+          const adMap = await $utils.getStorage('ad-count')
+          const currentDay = $utils.getCurrentDay()
+          if (adMap) {
+            this.adCountMap.set(currentDay, adMap.get(currentDay) + 1)
+          } else {
+            this.adCountMap.set(currentDay, 1)
+          }
+          $utils.setStorage('ad-count', this.adCountMap)
         } else {
           console.log('播放中途退出，不下发奖励')
         }

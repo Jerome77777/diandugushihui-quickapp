@@ -30,7 +30,7 @@
       <text class="book-header">简介</text>
       <text class="details">{{ info.bookIntroduction }}</text>
     </div>
-    <ad-component></ad-component>
+    <!-- <ad-component></ad-component> -->
   </div>
 </template>
 
