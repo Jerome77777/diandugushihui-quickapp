@@ -137,13 +137,13 @@ export default {
     bookId: 1,
     bookTitle: '',
     chapterId: 1,
-    total: 120
+    total: 120,
+    adCountMap: []
   },
   private: {
     content: '',
     count: 0,
     rewardedVideoAd: null,
-    adCountMap: new Map(),
     chapterTitle: '',
     showPop: false,
     userSetting: {
@@ -194,10 +194,8 @@ export default {
     // })
     this.bookTitle = this.chapterName
     this.adCountMap = await $utils.getStorage('ad-count')
-    console.log('cjf this.adCountMap', this.adCountMap)
     if (this.adCountMap) {
-      const counts = this.adCountMap.get($utils.getCurrentDay())
-      console.log('cjf this.counts', counts)
+      const counts = this.getCurrentDayCount(this.adCountMap)
       if (counts >= 31) {
         return
       }
@@ -206,6 +204,16 @@ export default {
     setInterval(() => {
       this.showAd()
     }, 60 * 1000)
+  },
+  getCurrentDayCount(arr) {
+    const currentDay = $utils.getCurrentDay()
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i][0] === currentDay) {
+        return arr[i][1]
+        break
+      }
+    }
+    return 0
   },
   async onReady() {
     //获取用户自定义的样式,不存在自定义样式时使用默认样式
@@ -218,15 +226,13 @@ export default {
   },
   async showAd() {
     this.adCountMap = await $utils.getStorage('ad-count')
-    console.log('cjf this.adCountMap', this.adCountMap)
     if (this.adCountMap) {
-      const counts = this.adCountMap.get($utils.getCurrentDay())
-      console.log('cjf this.counts', counts)
+      const counts = this.getCurrentDayCount(this.adCountMap)
       if (counts >= 31) {
         return false
       }
     }
-    this.showAd()
+    this.$child('popupCenter').show()
     return true
   },
   /* -------------------SelfCustomEvent------------------ */
@@ -275,14 +281,20 @@ export default {
         if (res && res.isEnded) {
           $utils.analytics('video', '激励视频')
           $utils.showToast('已看完激励视频，已发放金币奖励！')
-          const adMap = await $utils.getStorage('ad-count')
+          const adMap = (await $utils.getStorage('ad-count')) || []
+
           const currentDay = $utils.getCurrentDay()
-          if (adMap) {
-            this.adCountMap.set(currentDay, adMap.get(currentDay) + 1)
+          if (adMap.length > 0) {
+            for (let i = 0; i < adMap.length; i++) {
+              if (adMap[i][0] === currentDay) {
+                adMap[i][1] += 1
+              }
+            }
           } else {
-            this.adCountMap.set(currentDay, 1)
+            adMap.push([currentDay, 1])
           }
-          $utils.setStorage('ad-count', this.adCountMap)
+          $utils.setStorage('ad-count', adMap)
+          this.adCountMap = adMap
         } else {
           console.log('播放中途退出，不下发奖励')
         }
