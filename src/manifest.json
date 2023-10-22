@@ -1,8 +1,8 @@
 {
   "package": "com.chuangke.diandugushihui",
   "name": "典阅故事汇",
-  "versionName": "2.0.5",
-  "versionCode": 16,
+  "versionName": "2.1.0",
+  "versionCode": 18,
   "minPlatformVersion": 1095,
   "icon": "/assets/logo.png",
   "features": [
@@ -107,7 +107,6 @@
       "pages/user-info": {
         "component": "index"
       }
-      
     }
   },
   "display": {
@@ -175,7 +174,6 @@
       "pages/user-info": {
         "titleBarText": ""
       }
-      
     }
   }
 }
