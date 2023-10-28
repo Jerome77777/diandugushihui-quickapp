@@ -19,9 +19,11 @@ export const tabList = [
 
 export const adUnitIds = {
   vivo: {
-    rewardedVideo: '96aeb453eab841d6b7e88b0e44cf6962'
+    bannerId: '6afd5ee590c94905948a4fc3ab5cdd3d',
+    rewardedVideo: '1d38ab5d7b9641149d8659fad5978845'
   },
   OPPO: {
+    bannerId: '854368',
     rewardedVideo: '854369'
   }
 }

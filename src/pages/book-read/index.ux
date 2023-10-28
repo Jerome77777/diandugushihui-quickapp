@@ -272,7 +272,7 @@ export default {
       this.rewardedVideoAd = ad.createRewardedVideoAd({
         adUnitId: adUnitIds[provider].rewardedVideo
       })
-
+      this.rewardedVideoAd.load()
       this.rewardedVideoAd.onLoad(() => {
         console.log('激励视频广告加载成功')
         this.rewardedVideoAd.show()
