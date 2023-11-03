@@ -1,0 +1,162 @@
+<template>
+  <div>
+    <stack class="dialog" if="{{isDialog}}">
+      <div class="dialog-container">
+        <div class="dialog-title">
+          <text>{{ title }}</text>
+        </div>
+        <div class="content">
+          <text>{{ content }}</text>
+        </div>
+        <div class="btns">
+          <div if="type != 'confirm'" class="default-btn" @click="closeBtn">
+            <text class="text">{{ cancelText }}</text>
+            <text class="border-right"></text>
+          </div>
+          <div if="type == 'confirmGo'" class="confirm-btn" @click="confirmBtn">
+            <text class="text"> {{ confirmText }}</text>
+          </div>
+        </div>
+      </div>
+    </stack>
+  </div>
+</template>
+<script>
+export default {
+  props: {
+    isDialog: {
+      type: Boolean,
+      default: false
+    },
+    // 类型包括 defalut 默认， danger 危险， confirm 确认，
+    type: {
+      type: String,
+      default: 'default'
+    },
+    content: {
+      type: String,
+      default: ''
+    },
+    title: {
+      type: String,
+      default: '我是标题'
+    },
+    cancelText: {
+      type: String,
+      default: '取消'
+    },
+    confirmText: {
+      type: String,
+      default: '确认'
+    }
+  },
+  data: {},
+  closeBtn() {
+    this.$emit('cancel')
+  },
+  confirmBtn() {
+    this.$emit('confirm')
+  }
+}
+</script>
+<style lang="less">
+.dialog {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+
+  .dialog-container {
+    width: 530px;
+    height: 221px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    border-radius: 8px;
+    margin: auto;
+    border-radius: 10px;
+    .dialog-title {
+      color: #696969;
+      text {
+      }
+    }
+    .content {
+      width: 100%;
+      height: 123px;
+      color: #797979;
+      text {
+        height: 123px;
+        font-size: 30px;
+        font-family: PingFangSC-Regular, PingFang SC;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.8);
+        line-height: 123px;
+        text-align: center;
+        margin-left: 56px;
+      }
+    }
+
+    .btns {
+      width: 100%;
+      height: 98px;
+      text-align: right;
+      padding: 0 16px;
+      .confirm-btn {
+        .text {
+          width: 70px;
+          height: 98px;
+          font-size: 30px;
+          font-family: PingFangSC-Regular, PingFang SC;
+          font-weight: 400;
+          color: rgba(76, 159, 255, 1);
+          line-height: 98px;
+          text-align: center;
+          margin: auto;
+        }
+      }
+      .default-btn {
+        width: 265px;
+        height: 98px;
+        border-top: 1px solid #eee;
+        .text {
+          width: 70px;
+          height: 98px;
+          font-size: 30px;
+          font-family: PingFangSC-Regular, PingFang SC;
+          font-weight: 400;
+          color: rgba(76, 159, 255, 1);
+          line-height: 98px;
+          text-align: center;
+          margin: auto;
+        }
+        .border-right {
+          height: 48px;
+          width: 1px;
+          background-color: #eee;
+          margin: 25px 0px;
+        }
+      }
+      .confirm-btn {
+        width: 265px;
+        height: 98px;
+        border-top: 1px solid #eee;
+        text {
+          width: 60px;
+          height: 98px;
+          font-size: 30px;
+          font-family: PingFangSC-Regular, PingFang SC;
+          font-weight: 400;
+          color: rgba(76, 159, 255, 1);
+          line-height: 98px;
+          text-align: center;
+          margin: auto;
+        }
+      }
+    }
+  }
+}
+</style>

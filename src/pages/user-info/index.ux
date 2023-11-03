@@ -31,7 +31,7 @@ export default {
         desc: ''
       },
       {
-        type: '注销登录',
+        type: '退出登录',
         desc: ''
       }
     ]
@@ -46,7 +46,7 @@ export default {
 
   handleAboutClick(type) {
     switch (type) {
-      case '注销登录':
+      case '退出登录':
         $utils.removeStorage(username_key)
         $utils.removeStorage(uid_key)
         router.replace({

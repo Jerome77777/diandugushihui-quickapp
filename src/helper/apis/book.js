@@ -68,7 +68,12 @@ function searchByName(data) {
   return $ajax.post('/rest/book/search_by_name', data)
 }
 
+function getAdNums(data) {
+  return $ajax.post('/rest/device/ad_nums', data)
+}
+
 export default {
+  getAdNums,
   setUserBooksShelf,
   removeUserBooksShelf,
   getAllBooks,

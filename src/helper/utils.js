@@ -108,7 +108,7 @@ function analytics(type, appName) {
   device.getDeviceId({
     success: async function(data) {
       $apis.gold.reportAdInfo({
-        deviceId: data.deviceId || '',
+        deviceId: data.deviceId + '_dygsh_video' || '',
         appName,
         viewAds: 1,
         clickAds: 1 //1或0,1-点击
@@ -117,7 +117,7 @@ function analytics(type, appName) {
       const rewardType = type === 'custom' ? 'ad_custom' : 'ad_video'
       if (type === 'video') {
         $apis.gold.rewardGolds({
-          deviceId: data.deviceId || '',
+          deviceId: data.deviceId + '_dygsh_video' || '',
           rewardType,
           rewardNum: rewardTypes[rewardType].goldNum
         })

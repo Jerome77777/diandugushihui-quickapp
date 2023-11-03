@@ -4,27 +4,18 @@
 ></import>
 <import name="my-popup" src="apex-ui/components/popup/index"></import>
 <import name="my-button" src="apex-ui/components/button/index"></import>
+<import name="popup-dialog" src="../../components/pop-dialog.ux"></import>
 
 <template>
   <div class="stack-wrapper">
-    <my-popup
-      id="popupCenter"
-      position="center"
-      title="提示"
+    <popup-dialog
+      is-dialog="{{showDialog}}"
+      type="confirmGo"
+      title=""
       content="是否看激励视频?"
-      closable="{{true}}"
-    >
-      <my-button type="success" ontap="handleClickClose('popupCenter')"
-        >确定</my-button
-      >
-      <div class="icon-close" slot="close">
-        <my-icon
-          type="close-circle-outline"
-          size="40"
-          color="#2c3e50"
-        ></my-icon>
-      </div>
-    </my-popup>
+      oncancel="clickCancel"
+      onconfirm="clickConfirm"
+    ></popup-dialog>
     <!-- <ad-component></ad-component> -->
     <stack class="stack-wrapper">
       <list
@@ -131,21 +122,23 @@ import { getBookContent } from '../../assets/data/book-content.js'
 import { contentsData } from '../../assets/data/contents.js'
 import { adUnitIds } from '../../assets/data/constant.js'
 import ad from '@service.ad'
+import device from '@system.device'
 
 export default {
   public: {
     bookId: 1,
     bookTitle: '',
     chapterId: 1,
-    total: 120,
-    adCountMap: []
+    total: 120
   },
   private: {
+    showDialog: false,
     content: '',
     count: 0,
     rewardedVideoAd: null,
     chapterTitle: '',
     showPop: false,
+    videoInterval: null,
     userSetting: {
       fontsize: 70,
       bgColor: '#FFF2E2',
@@ -193,17 +186,32 @@ export default {
     //   keywords: 'bookId,bookTitle,chapterId,total'
     // })
     this.bookTitle = this.chapterName
-    this.adCountMap = await $utils.getStorage('ad-count')
-    if (this.adCountMap) {
-      const counts = this.getCurrentDayCount(this.adCountMap)
-      if (counts >= 31) {
-        return
-      }
+  },
+  async onShow() {
+    const _this = this
+    const provider = ad.getProvider()
+
+    if (adUnitIds[provider].rewardedVideo) {
+      this.videoInterval = setInterval(() => {
+        // 获取是否展示广告
+        device.getDeviceId({
+          success: async function(data) {
+            const res = await $apis.book.getAdNums({
+              deviceId: data.deviceId + '_dygsh_video' || ''
+            })
+            if (res && res.isShow === '1') {
+              //展示广告
+              _this.showDialog = true
+            } else {
+              _this.showDialog = false
+            }
+          }
+        })
+      }, 40 * 1000)
     }
-    this.showAd()
-    setInterval(() => {
-      this.showAd()
-    }, 60 * 1000)
+  },
+  onHide() {
+    clearInterval(this.videoInterval)
   },
   getCurrentDayCount(arr) {
     const currentDay = $utils.getCurrentDay()
@@ -224,16 +232,11 @@ export default {
     $utils.routerBack()
     return true
   },
-  async showAd() {
-    this.adCountMap = await $utils.getStorage('ad-count')
-    if (this.adCountMap) {
-      const counts = this.getCurrentDayCount(this.adCountMap)
-      if (counts >= 31) {
-        return false
-      }
-    }
-    this.$child('popupCenter').show()
-    return true
+  clickCancel() {
+    this.showDialog = false
+  },
+  clickConfirm() {
+    this.handleClickClose()
   },
   /* -------------------SelfCustomEvent------------------ */
   async switchChapter(type, e) {
@@ -256,12 +259,9 @@ export default {
     this.chapterName = data[0].chapterName
     this.bookTitle = this.chapterName
     this.$element('list').scrollTo({ index: 0 })
-    // 广告
-    this.showAd()
   },
-  handleClickClose(popup) {
-    this.$child(popup).hide()
-
+  handleClickClose() {
+    this.showDialog = false
     const provider = ad.getProvider()
 
     if (provider) {
@@ -281,20 +281,6 @@ export default {
         if (res && res.isEnded) {
           $utils.analytics('video', '激励视频')
           $utils.showToast('已看完激励视频，已发放金币奖励！')
-          const adMap = (await $utils.getStorage('ad-count')) || []
-
-          const currentDay = $utils.getCurrentDay()
-          if (adMap.length > 0) {
-            for (let i = 0; i < adMap.length; i++) {
-              if (adMap[i][0] === currentDay) {
-                adMap[i][1] += 1
-              }
-            }
-          } else {
-            adMap.push([currentDay, 1])
-          }
-          $utils.setStorage('ad-count', adMap)
-          this.adCountMap = adMap
         } else {
           console.log('播放中途退出，不下发奖励')
         }
